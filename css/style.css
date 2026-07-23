@@ -28,9 +28,10 @@ h1{margin-bottom:24px;color:#333;}
 .page img{
     width:100%;
     height:100%;
-    object-fit: cover; /* contain是完整显示图片留空白；cover填满容器裁切边缘 */
+    object-fit: contain;
     max-width: 100%;
     display:block;
+}
 }
 }
 .btn-group{margin-top:24px;gap:16px;display:flex;justify-content:center}
