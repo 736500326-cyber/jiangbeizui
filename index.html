@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>画册动效展示</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>画册展示</h1>
+        <div id="book">
+            <!-- 按已上传图片顺序排布书页 -->
+            <div class="page"><img src="./images/1.jpg" alt="第1页"></div>
+            <div class="page"><img src="./images/2.jpg" alt="第2页"></div>
+            <div class="page"><img src="./images/3.jpg" alt="第3页"></div>
+            <div class="page"><img src="./images/4.jpg" alt="第4页"></div>
+            <div class="page"><img src="./images/5.jpg" alt="第5页"></div>
+            <div class="page"><img src="./images/6.jpg" alt="第6页"></div>
+        </div>
+        <div class="btn-group">
+            <button id="prev">上一页</button>
+            <button id="next">下一页</button>
+        </div>
+    </div>
+    <script src="./js/main.js"></script>
+</body>
+</html>
