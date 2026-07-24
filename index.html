@@ -5,523 +5,116 @@
 
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  >
+
+  <meta
+    name="description"
+    content="江北嘴电子画册"
   >
 
   <title>江北嘴电子画册</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      background: #111;
-      font-family:
-        "Microsoft YaHei",
-        "PingFang SC",
-        Arial,
-        sans-serif;
-    }
-
-    button {
-      font-family: inherit;
-    }
-
-    /* ==============================
-       开屏封面
-       ============================== */
-
-    #splash {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      overflow: hidden;
-      background: #f7f4ee;
-
-      opacity: 1;
-      visibility: visible;
-
-      transition:
-        opacity 0.7s ease,
-        visibility 0.7s ease,
-        transform 1s ease;
-    }
-
-    #splash.hide {
-      opacity: 0;
-      visibility: hidden;
-      transform: scale(1.03);
-      pointer-events: none;
-    }
-
-    #splashCover {
-      position: absolute;
-      inset: 0;
-
-      width: 100%;
-      height: 100%;
-
-      object-fit: cover;
-      object-position: center;
-
-      user-select: none;
-      -webkit-user-drag: none;
-    }
-
-    .splash-mask {
-      position: absolute;
-      inset: 0;
-
-      background:
-        linear-gradient(
-          to top,
-          rgba(0, 0, 0, 0.48),
-          rgba(0, 0, 0, 0) 45%
-        );
-    }
-
-    .enter-area {
-      position: absolute;
-      left: 50%;
-      bottom: 55px;
-
-      z-index: 2;
-
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-
-      transform: translateX(-50%);
-    }
-
-    #enterBtn {
-      min-width: 190px;
-      height: 54px;
-
-      padding: 0 28px;
-
-      border: 1px solid rgba(255, 255, 255, 0.75);
-      border-radius: 30px;
-
-      color: #fff;
-      background: rgba(0, 0, 0, 0.3);
-
-      font-size: 16px;
-      letter-spacing: 4px;
-
-      cursor: pointer;
-
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
-
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-
-      transition:
-        background 0.2s ease,
-        transform 0.2s ease;
-    }
-
-    #enterBtn:hover {
-      background: rgba(0, 0, 0, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .enter-tip {
-      margin: 0;
-      color: rgba(255, 255, 255, 0.78);
-      font-size: 12px;
-      letter-spacing: 2px;
-      white-space: nowrap;
-    }
-
-    /* ==============================
-       画册阅读页面
-       ============================== */
-
-    #reader {
-      position: fixed;
-      inset: 0;
-
-      display: grid;
-      grid-template-rows: 50px 1fr 28px;
-
-      overflow: hidden;
-
-background-color: #f1efeb;
-
-background-image: url("./images/11.webp");
-
-background-position: center center;
-
-background-size: cover;
-
-background-repeat: no-repeat;
-      opacity: 0;
-      visibility: hidden;
-
-      transition: opacity 0.6s ease;
-    }
-
-    #reader.active {
-      opacity: 1;
-      visibility: visible;
-    }
-
-.reader-mask {
-  position: absolute;
-  inset: 0;
-
-  /*
-    使用白色半透明遮罩提亮背景。
-    0.16越大，背景越亮。
-  */
-  background: rgba(255, 255, 255, 0.16);
-
-  pointer-events: none;
-}
-
-    /* ==============================
-       顶部工具栏
-       ============================== */
-
-.toolbar {
-  position: relative;
-  z-index: 20;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  min-height: 50px;
-
-  padding: 0 24px;
-
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-
-  background: rgba(255, 255, 255, 0.1);
-
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-    .brand-name {
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 14px;
-      letter-spacing: 4px;
-    }
-
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-
-    .toolbar-btn {
-      height: 36px;
-      min-width: 36px;
-
-      padding: 0 13px;
-
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 20px;
-
-      color: #fff;
-      background: rgba(0, 0, 0, 0.28);
-
-      font-size: 14px;
-
-      cursor: pointer;
-
-      transition:
-        background 0.2s ease,
-        border-color 0.2s ease;
-    }
-
-    .toolbar-btn:hover {
-      background: rgba(255, 255, 255, 0.16);
-      border-color: rgba(255, 255, 255, 0.55);
-    }
-
-    .page-number {
-      min-width: 72px;
-
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 13px;
-      text-align: center;
-    }
-
-    /* ==============================
-       画册舞台
-       ============================== */
-
-#bookStage {
-  position: relative;
-  z-index: 5;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-
-  /*
-    减少四周留白，让画册使用更多屏幕空间
-  */
-  padding: 4px 16px 8px;
-
-  overflow: hidden;
-}
-    #book {
-      filter:
-        drop-shadow(
-          0 22px 38px rgba(0, 0, 0, 0.48)
-        );
-    }
-
-    /* 翻页插件元素 */
-
-    .stf__parent {
-      margin: auto !important;
-    }
-
-    .stf__item {
-      background: #fff;
-    }
-
-    .stf__block {
-      box-shadow: none !important;
-    }
-
-    /* 左右隐形点击区 */
-
-    .side-click {
-      position: absolute;
-      top: 10%;
-      bottom: 10%;
-
-      z-index: 15;
-
-      width: min(11vw, 110px);
-
-      border: 0;
-      background: transparent;
-
-      cursor: pointer;
-    }
-
-    #leftSide {
-      left: 0;
-    }
-
-    #rightSide {
-      right: 0;
-    }
-
-    /* 底部提示 */
-
-    .footer-tip {
-      position: relative;
-      z-index: 20;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
-
-      color: rgba(255, 255, 255, 0.58);
-      background: rgba(0, 0, 0, 0.17);
-
-      font-size: 11px;
-      letter-spacing: 1px;
-
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
-    /* ==============================
-       翻页组件加载失败时的备用模式
-       ============================== */
-
-    #fallback {
-      display: none;
-
-      position: relative;
-
-      width: auto;
-      height: 100%;
-      max-width: 100%;
-      max-height: 100%;
-
-      align-items: center;
-      justify-content: center;
-    }
-
-    #fallback.active {
-      display: flex;
-    }
-
-    #fallbackImage {
-      display: block;
-
-      width: auto;
-      height: auto;
-
-      max-width: 100%;
-      max-height: 100%;
-
-      object-fit: contain;
-
-      background: #fff;
-
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.42);
-    }
-
-    /* ==============================
-       手机适配
-       ============================== */
-
-    @media (max-width: 720px) {
-      #reader {
-        grid-template-rows: 56px 1fr 32px;
-      }
-
-      .toolbar {
-        padding: 0 10px;
-      }
-
-      .brand-name {
-        max-width: 105px;
-
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-
-        font-size: 11px;
-        letter-spacing: 2px;
-      }
-
-      .toolbar-right {
-        gap: 5px;
-      }
-
-      .toolbar-btn {
-        min-width: 32px;
-        height: 32px;
-        padding: 0 10px;
-        font-size: 12px;
-      }
-
-      .page-number {
-        min-width: 55px;
-        font-size: 11px;
-      }
-
-      #bookStage {
-        padding: 8px 4px;
-      }
-
-      .side-click {
-        width: 14vw;
-      }
-
-      .footer-tip {
-        font-size: 9px;
-      }
-
-      .enter-area {
-        bottom: 34px;
-      }
-
-      #enterBtn {
-        min-width: 165px;
-        height: 48px;
-        font-size: 14px;
-      }
-    }
-  </style>
+  <!-- 引入CSS样式 -->
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body>
 
-  <!-- 整屏开屏 -->
-  <section id="splash">
+  <!-- ==============================
+       开屏页面
+       使用 images/10.webp
+       ============================== -->
+  <section id="splash" class="splash">
 
     <img
       id="splashCover"
+      class="splash__cover"
       src="./images/10.webp"
-      alt="电子画册开屏封面"
+      alt="江北嘴电子画册开屏封面"
+      draggable="false"
     >
 
-    <div class="splash-mask"></div>
+    <div class="splash__mask"></div>
 
-    <div class="enter-area">
-      <button id="enterBtn">
-        开启画册 →
+    <div class="splash__content">
+
+      <button
+        id="enterBtn"
+        class="enter-button"
+        type="button"
+      >
+        <span>开启画册</span>
+        <span aria-hidden="true">→</span>
       </button>
 
-      <p class="enter-tip">
+      <p class="splash__tip">
         点击进入电子画册
       </p>
-    </div>
 
+    </div>
   </section>
 
 
-  <!-- 阅读页面 -->
-  <main id="reader">
+  <!-- ==============================
+       画册阅读页面
+       背景使用 images/11.webp
+       ============================== -->
+  <main
+    id="reader"
+    class="reader"
+    aria-hidden="true"
+  >
 
-    <div class="reader-mask"></div>
+    <!-- 背景提亮层 -->
+    <div class="reader__mask"></div>
 
+
+    <!-- 顶部工具栏 -->
     <header class="toolbar">
 
-      <div class="brand-name">
+      <div class="toolbar__brand">
         江北嘴电子画册
       </div>
 
-      <div class="toolbar-right">
+      <div class="toolbar__actions">
 
         <button
           id="prevBtn"
-          class="toolbar-btn"
+          class="toolbar-button"
           type="button"
+          aria-label="上一页"
           title="上一页"
         >
           ←
         </button>
 
-        <div class="page-number">
+        <div
+          class="page-status"
+          aria-live="polite"
+        >
           <span id="currentPage">1</span>
-          /
-          <span id="totalPage">9</span>
+
+          <span class="page-status__divider">
+            /
+          </span>
+
+          <span id="totalPages">9</span>
         </div>
 
         <button
           id="nextBtn"
-          class="toolbar-btn"
+          class="toolbar-button"
           type="button"
+          aria-label="下一页"
           title="下一页"
         >
           →
         </button>
 
         <button
-          id="fullBtn"
-          class="toolbar-btn"
+          id="fullscreenBtn"
+          class="toolbar-button toolbar-button--text"
           type="button"
         >
           全屏
@@ -531,28 +124,52 @@ background-repeat: no-repeat;
     </header>
 
 
-    <section id="bookStage">
+    <!-- ==============================
+         画册展示区域
+         ============================== -->
+    <section
+      id="bookStage"
+      class="book-stage"
+      aria-label="电子画册展示区域"
+    >
 
-      <div id="book"></div>
+      <!-- 电脑端仿真翻页 -->
+      <div
+        id="desktopBook"
+        class="desktop-book"
+      >
+        <div id="book"></div>
+      </div>
 
-      <div id="fallback">
+
+      <!-- 手机端单页阅读 -->
+      <div
+        id="mobileBook"
+        class="mobile-book"
+      >
         <img
-          id="fallbackImage"
+          id="mobilePage"
+          class="mobile-book__page"
           src="./images/1.webp"
-          alt="画册页面"
+          alt="画册第1页"
+          draggable="false"
         >
       </div>
 
+
+      <!-- 左侧点击翻页区域 -->
       <button
-        id="leftSide"
-        class="side-click"
+        id="leftHotspot"
+        class="page-hotspot page-hotspot--left"
         type="button"
         aria-label="上一页"
       ></button>
 
+
+      <!-- 右侧点击翻页区域 -->
       <button
-        id="rightSide"
-        class="side-click"
+        id="rightHotspot"
+        class="page-hotspot page-hotspot--right"
         type="button"
         aria-label="下一页"
       ></button>
@@ -560,382 +177,24 @@ background-repeat: no-repeat;
     </section>
 
 
-    <footer class="footer-tip">
-      鼠标拖动页面翻页 · 键盘左右方向键翻页
+    <!-- 底部说明 -->
+    <footer class="reader-footer">
+      电脑端：鼠标拖动或方向键翻页　·　手机端：左右滑动翻页
     </footer>
 
   </main>
 
 
-  <!-- 翻页插件 -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"
-  ></script>
+  <noscript>
+    请开启浏览器 JavaScript 后查看电子画册。
+  </noscript>
 
 
-  <script>
-    const PAGE_COUNT = 9;
+  <!-- 翻页插件，必须放在main.js前面 -->
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 
-    const pageImages = [];
-
-    for (let i = 1; i <= PAGE_COUNT; i++) {
-      pageImages.push("./images/" + i + ".webp");
-    }
-
-    const splash =
-      document.getElementById("splash");
-
-    const reader =
-      document.getElementById("reader");
-
-    const enterBtn =
-      document.getElementById("enterBtn");
-
-    const bookElement =
-      document.getElementById("book");
-
-    const fallback =
-      document.getElementById("fallback");
-
-    const fallbackImage =
-      document.getElementById("fallbackImage");
-
-    const prevBtn =
-      document.getElementById("prevBtn");
-
-    const nextBtn =
-      document.getElementById("nextBtn");
-
-    const leftSide =
-      document.getElementById("leftSide");
-
-    const rightSide =
-      document.getElementById("rightSide");
-
-    const fullBtn =
-      document.getElementById("fullBtn");
-
-    const currentPage =
-      document.getElementById("currentPage");
-
-    const totalPage =
-      document.getElementById("totalPage");
-
-    totalPage.textContent =
-      PAGE_COUNT;
-
-    let pageFlip = null;
-    let initialized = false;
-    let fallbackIndex = 0;
-    let fallbackMode = false;
-
-
-    function initializeBook() {
-      if (initialized) {
-        return;
-      }
-
-      initialized = true;
-
-      if (
-        window.St &&
-        window.St.PageFlip
-      ) {
-        pageFlip =
-          new St.PageFlip(
-            bookElement,
-            {
-              /*
-                原图比例：
-                2362 × 3153
-
-                网页基础比例：
-                749 × 1000
-
-                不会拉伸图片
-              */
-/*
-  使用更大的逻辑尺寸。
-  仍然保持2362×3153的原始比例，
-  页面只会等比缩放，不会拉伸。
-*/
-
-width: 1500,
-height: 2002,
-
-size: "stretch",
-
-minWidth: 360,
-maxWidth: 1500,
-
-minHeight: 481,
-maxHeight: 2002,
-
-              showCover: true,
-              usePortrait: true,
-              autoSize: true,
-
-              drawShadow: true,
-              maxShadowOpacity: 0.42,
-
-              flippingTime: 850,
-
-              mobileScrollSupport: false,
-              swipeDistance: 25,
-
-              showPageCorners: true,
-              disableFlipByClick: false
-            }
-          );
-
-        pageFlip.loadFromImages(
-          pageImages
-        );
-
-        pageFlip.on(
-          "flip",
-          function(event) {
-            const pageIndex =
-              Number(event.data) || 0;
-
-            currentPage.textContent =
-              pageIndex + 1;
-          }
-        );
-      } else {
-        enableFallback();
-      }
-    }
-
-
-    function enableFallback() {
-      fallbackMode = true;
-
-      bookElement.style.display =
-        "none";
-
-      fallback.classList.add(
-        "active"
-      );
-
-      showFallbackPage();
-    }
-
-
-    function showFallbackPage() {
-      fallbackImage.src =
-        pageImages[fallbackIndex];
-
-      currentPage.textContent =
-        fallbackIndex + 1;
-    }
-
-
-    function openBook() {
-      reader.classList.add(
-        "active"
-      );
-
-      initializeBook();
-
-      splash.classList.add(
-        "hide"
-      );
-
-      setTimeout(
-        function() {
-          splash.style.display =
-            "none";
-
-          window.dispatchEvent(
-            new Event("resize")
-          );
-        },
-        750
-      );
-
-      setTimeout(
-        function() {
-          window.dispatchEvent(
-            new Event("resize")
-          );
-        },
-        150
-      );
-    }
-
-
-    function previousPage() {
-      if (
-        fallbackMode
-      ) {
-        if (
-          fallbackIndex > 0
-        ) {
-          fallbackIndex--;
-          showFallbackPage();
-        }
-
-        return;
-      }
-
-      if (pageFlip) {
-        pageFlip.flipPrev();
-      }
-    }
-
-
-    function nextPage() {
-      if (
-        fallbackMode
-      ) {
-        if (
-          fallbackIndex <
-          PAGE_COUNT - 1
-        ) {
-          fallbackIndex++;
-          showFallbackPage();
-        }
-
-        return;
-      }
-
-      if (pageFlip) {
-        pageFlip.flipNext();
-      }
-    }
-
-
-    async function toggleFullscreen() {
-      try {
-        if (
-          !document.fullscreenElement
-        ) {
-          await document
-            .documentElement
-            .requestFullscreen();
-        } else {
-          await document
-            .exitFullscreen();
-        }
-      } catch (error) {
-        console.log(
-          "浏览器未允许全屏：",
-          error
-        );
-      }
-    }
-
-
-    enterBtn.addEventListener(
-      "click",
-      openBook
-    );
-
-    prevBtn.addEventListener(
-      "click",
-      previousPage
-    );
-
-    nextBtn.addEventListener(
-      "click",
-      nextPage
-    );
-
-    leftSide.addEventListener(
-      "click",
-      previousPage
-    );
-
-    rightSide.addEventListener(
-      "click",
-      nextPage
-    );
-
-    fullBtn.addEventListener(
-      "click",
-      toggleFullscreen
-    );
-
-
-    document.addEventListener(
-      "fullscreenchange",
-      function() {
-        fullBtn.textContent =
-          document.fullscreenElement
-            ? "退出"
-            : "全屏";
-
-        setTimeout(
-          function() {
-            window.dispatchEvent(
-              new Event("resize")
-            );
-          },
-          100
-        );
-      }
-    );
-
-
-    document.addEventListener(
-      "keydown",
-      function(event) {
-        if (
-          !reader.classList.contains(
-            "active"
-          )
-        ) {
-          if (
-            event.key === "Enter" ||
-            event.key === " "
-          ) {
-            openBook();
-          }
-
-          return;
-        }
-
-        if (
-          event.key === "ArrowLeft"
-        ) {
-          previousPage();
-        }
-
-        if (
-          event.key === "ArrowRight"
-        ) {
-          nextPage();
-        }
-
-        if (
-          event.key === "f" ||
-          event.key === "F"
-        ) {
-          toggleFullscreen();
-        }
-      }
-    );
-
-
-    /*
-      如果插件因为网络问题迟迟没有加载，
-      进入页面1.5秒后自动启用备用模式。
-    */
-
-    setTimeout(
-      function() {
-        if (
-          initialized &&
-          !pageFlip &&
-          !fallbackMode
-        ) {
-          enableFallback();
-        }
-      },
-      1500
-    );
-  </script>
+  <!-- 引入JS功能代码 -->
+  <script src="./js/main.js"></script>
 
 </body>
 </html>
