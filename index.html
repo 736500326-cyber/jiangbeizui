@@ -285,6 +285,36 @@ background-repeat: no-repeat;
 
   overflow: hidden;
 }
+/*
+  画册位置控制容器。
+
+  第一页时，由JavaScript向左移动四分之一画册宽度，
+  让单独的封面页面居中。
+
+  翻页后恢复translateX(0)，显示正常左右双页。
+*/
+#bookPositioner {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 auto;
+
+  width: auto;
+  height: auto;
+
+  transition:
+    transform 0.48s cubic-bezier(
+      0.22,
+      0.61,
+      0.36,
+      1
+    );
+
+  will-change: transform;
+}  
     #book {
       filter:
         drop-shadow(
@@ -533,7 +563,9 @@ background-repeat: no-repeat;
 
     <section id="bookStage">
 
-      <div id="book"></div>
+      <div id="bookPositioner">
+        <div id="book"></div>
+      </div>
 
       <div id="fallback">
         <img
@@ -593,6 +625,11 @@ background-repeat: no-repeat;
 
     const bookElement =
       document.getElementById("book");
+    
+    const bookPositioner =
+  document.getElementById(
+    "bookPositioner"
+  );
 
     const fallback =
       document.getElementById("fallback");
@@ -624,12 +661,75 @@ background-repeat: no-repeat;
     totalPage.textContent =
       PAGE_COUNT;
 
-    let pageFlip = null;
-    let initialized = false;
-    let fallbackIndex = 0;
-    let fallbackMode = false;
+let pageFlip = null;
+let initialized = false;
+let fallbackIndex = 0;
+let fallbackMode = false;
+
+/*
+  记录当前页面索引。
+
+  第1页索引为0；
+  第2页索引为1。
+*/
+let currentPageIndex = 0;
 
 
+ /*
+  控制画册的位置：
+
+  第1页时，把右侧封面移动到屏幕中央；
+  第2页以后，恢复正常双页居中。
+*/
+function updateBookPosition(pageIndex = 0) {
+  currentPageIndex = pageIndex;
+
+  /*
+    手机端本身是单页显示，
+    不需要移动画册。
+  */
+  const isMobile =
+    window.innerWidth <= 720;
+
+  /*
+    不是第一页、手机端或备用模式时，
+    恢复正常居中。
+  */
+  if (
+    pageIndex !== 0 ||
+    isMobile ||
+    fallbackMode
+  ) {
+    bookPositioner.style.transform =
+      "translateX(0px)";
+
+    return;
+  }
+
+  /*
+    等翻页组件完成尺寸计算后，
+    获取整本画册宽度。
+  */
+  requestAnimationFrame(
+    function() {
+      const bookRect =
+        bookElement.getBoundingClientRect();
+
+      /*
+        整本画册宽度除以4，
+        就是第一页需要向左移动的距离。
+      */
+      const moveDistance =
+        bookRect.width / 4;
+
+      bookPositioner.style.transform =
+        "translateX(-" +
+        moveDistance +
+        "px)";
+    }
+  );
+}  
+    
     function initializeBook() {
       if (initialized) {
         return;
@@ -692,16 +792,46 @@ maxHeight: 2002,
           pageImages
         );
 
-        pageFlip.on(
-          "flip",
-          function(event) {
-            const pageIndex =
-              Number(event.data) || 0;
+        /*
+  图片和翻页组件加载完成后，
+  把第1页封面移动到屏幕中心。
+*/
+setTimeout(
+  function() {
+    updateBookPosition(0);
+  },
+  100
+);
 
-            currentPage.textContent =
-              pageIndex + 1;
-          }
-        );
+setTimeout(
+  function() {
+    updateBookPosition(0);
+  },
+  500
+);
+
+        
+pageFlip.on(
+  "flip",
+  function(event) {
+    const pageIndex =
+      Number(event.data) || 0;
+
+    /*
+      更新页码。
+    */
+    currentPage.textContent =
+      pageIndex + 1;
+
+    /*
+      第1页居中；
+      第2页以后恢复双页居中。
+    */
+    updateBookPosition(
+      pageIndex
+    );
+  }
+);
       } else {
         enableFallback();
       }
@@ -935,6 +1065,31 @@ maxHeight: 2002,
       },
       1500
     );
+
+/*
+  浏览器尺寸改变或进入全屏以后，
+  重新计算第一页的居中位置。
+*/
+let resizeTimer = null;
+
+window.addEventListener(
+  "resize",
+  function() {
+    clearTimeout(
+      resizeTimer
+    );
+
+    resizeTimer = setTimeout(
+      function() {
+        updateBookPosition(
+          currentPageIndex
+        );
+      },
+      160
+    );
+  }
+);
+    
   </script>
 
 </body>
