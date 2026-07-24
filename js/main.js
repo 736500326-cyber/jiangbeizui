@@ -1,724 +1,705 @@
-/* =========================================
-   全局设置
-   ========================================= */
+document.addEventListener("DOMContentLoaded", function () {
+  "use strict";
 
-:root {
-  --toolbar-height: 50px;
-  --footer-height: 28px;
+  /* ==============================
+     基础设置
+     ============================== */
 
-  /*
-    电脑端画册缩放比例。
-    JavaScript会自动计算。
-  */
-  --book-scale: 1;
-}
+  const PAGE_COUNT = 9;
+  const MOBILE_BREAKPOINT = 768;
 
-
-* {
-  box-sizing: border-box;
-}
+  const pageImages = Array.from(
+    { length: PAGE_COUNT },
+    function (_, index) {
+      return "./images/" + (index + 1) + ".webp";
+    }
+  );
 
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-}
+  /* ==============================
+     获取页面元素
+     ============================== */
+
+  const splash =
+    document.getElementById("splash");
+
+  const reader =
+    document.getElementById("reader");
+
+  const enterBtn =
+    document.getElementById("enterBtn");
+
+  const desktopBook =
+    document.getElementById("desktopBook");
+
+  const bookElement =
+    document.getElementById("book");
+
+  const mobileBook =
+    document.getElementById("mobileBook");
+
+  const mobilePage =
+    document.getElementById("mobilePage");
+
+  const bookStage =
+    document.getElementById("bookStage");
+
+  const prevBtn =
+    document.getElementById("prevBtn");
+
+  const nextBtn =
+    document.getElementById("nextBtn");
+
+  const leftHotspot =
+    document.getElementById("leftHotspot");
+
+  const rightHotspot =
+    document.getElementById("rightHotspot");
+
+  const fullscreenBtn =
+    document.getElementById("fullscreenBtn");
+
+  const currentPage =
+    document.getElementById("currentPage");
+
+  const totalPages =
+    document.getElementById("totalPages");
 
 
-body {
-  overflow: hidden;
+  /* ==============================
+     检查HTML元素
+     ============================== */
 
-  color: #ffffff;
-  background: #111111;
-
-  font-family:
-    "Microsoft YaHei",
-    "PingFang SC",
-    Arial,
-    sans-serif;
-}
-
-
-button {
-  font: inherit;
-}
-
-
-/* =========================================
-   开屏页面
-   ========================================= */
-
-.splash {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-
-  display: grid;
-  place-items: center;
-
-  overflow: hidden;
-  background: #f7f4ee;
-
-  opacity: 1;
-  visibility: visible;
-
-  transition:
-    opacity 0.7s ease,
-    visibility 0.7s ease,
-    transform 1s ease;
-}
+  const requiredElements = [
+    splash,
+    reader,
+    enterBtn,
+    desktopBook,
+    bookElement,
+    mobileBook,
+    mobilePage,
+    bookStage,
+    prevBtn,
+    nextBtn,
+    leftHotspot,
+    rightHotspot,
+    fullscreenBtn,
+    currentPage,
+    totalPages
+  ];
 
 
-.splash.is-hidden {
-  opacity: 0;
-  visibility: hidden;
-  transform: scale(1.03);
-
-  pointer-events: none;
-}
+  const hasMissingElement =
+    requiredElements.some(function (element) {
+      return !element;
+    });
 
 
-.splash__cover {
-  position: absolute;
-  inset: 0;
-
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-  object-position: center;
-
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-
-.splash__mask {
-  position: absolute;
-  inset: 0;
-
-  background:
-    linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.46),
-      rgba(0, 0, 0, 0) 45%
+  if (hasMissingElement) {
+    alert(
+      "网页结构没有匹配成功，请检查 index.html 是否完整。"
     );
 
-  pointer-events: none;
-}
+    return;
+  }
 
 
-.splash__content {
-  position: absolute;
-  left: 50%;
-  bottom: max(5vh, 40px);
-  z-index: 2;
+  totalPages.textContent =
+    String(PAGE_COUNT);
 
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
 
-  transform: translateX(-50%);
-}
+  /* ==============================
+     状态变量
+     ============================== */
 
+  let pageFlip = null;
 
-.enter-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
+  let desktopInitialized = false;
 
-  min-width: 190px;
-  height: 54px;
+  let fallbackMode = false;
 
-  padding: 0 28px;
+  let currentPageIndex = 0;
 
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  border-radius: 999px;
+  let touchStartX = 0;
 
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.30);
+  let touchStartY = 0;
 
-  font-size: 16px;
-  letter-spacing: 4px;
+  let resizeTimer = null;
 
-  cursor: pointer;
 
-  box-shadow:
-    0 10px 30px rgba(0, 0, 0, 0.22);
+  /* ==============================
+     判断手机端
+     ============================== */
 
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  function isMobileView() {
+    return window.innerWidth <= MOBILE_BREAKPOINT;
+  }
 
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease;
-}
 
+  /* ==============================
+     更新页码
+     ============================== */
 
-.enter-button:hover {
-  background: rgba(0, 0, 0, 0.50);
+  function updatePageNumber() {
+    currentPage.textContent =
+      String(currentPageIndex + 1);
+  }
 
-  transform: translateY(-2px);
-}
 
+  /* ==============================
+     手机端更新页面
+     ============================== */
 
-.splash__tip {
-  margin: 0;
+  function updateMobilePage() {
+    mobilePage.src =
+      pageImages[currentPageIndex];
 
-  color: rgba(255, 255, 255, 0.78);
+    mobilePage.alt =
+      "画册第" +
+      (currentPageIndex + 1) +
+      "页";
 
-  font-size: 12px;
-  letter-spacing: 2px;
-  white-space: nowrap;
-}
+    updatePageNumber();
 
+    bookStage.scrollTop = 0;
+  }
 
-/* =========================================
-   画册阅读页面
-   ========================================= */
 
-.reader {
-  position: fixed;
-  inset: 0;
+  /* ==============================
+     电脑端自动计算画册大小
+     ============================== */
 
-  display: grid;
+  function fitDesktopBook() {
+    if (isMobileView()) {
+      return;
+    }
 
-  grid-template-rows:
-    var(--toolbar-height)
-    minmax(0, 1fr)
-    var(--footer-height);
+    /*
+      双页原始逻辑尺寸：
+      1498 × 1000
+    */
 
-  overflow: hidden;
+    const originalWidth = 1498;
+    const originalHeight = 1000;
 
-  background-color: #f1efeb;
+    const availableWidth =
+      Math.max(
+        bookStage.clientWidth - 24,
+        320
+      );
 
-  /*
-    注意：
-    style.css在css文件夹中，
-    所以背景图片需要使用../images
-  */
-  background-image:
-    url("../images/11.webp");
+    const availableHeight =
+      Math.max(
+        bookStage.clientHeight - 16,
+        260
+      );
 
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+    const widthScale =
+      availableWidth / originalWidth;
 
-  opacity: 0;
-  visibility: hidden;
+    const heightScale =
+      availableHeight / originalHeight;
 
-  transition: opacity 0.6s ease;
-}
-
-
-.reader.is-active {
-  opacity: 1;
-  visibility: visible;
-}
-
-
-/*
-  背景提亮层。
-
-  0.10越大，背景越亮。
-  例如可以改成0.16。
-*/
-.reader__mask {
-  position: absolute;
-  inset: 0;
-
-  background:
-    rgba(255, 255, 255, 0.10);
-
-  pointer-events: none;
-}
-
-
-.toolbar,
-.book-stage,
-.reader-footer {
-  position: relative;
-  z-index: 2;
-}
-
-
-/* =========================================
-   顶部工具栏
-   ========================================= */
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  gap: 16px;
-
-  min-height:
-    var(--toolbar-height);
-
-  padding:
-    0
-    clamp(10px, 2.4vw, 28px);
-
-  border-bottom:
-    1px solid
-    rgba(255, 255, 255, 0.20);
-
-  background:
-    rgba(40, 40, 44, 0.22);
-
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-
-.toolbar__brand {
-  overflow: hidden;
-
-  color:
-    rgba(255, 255, 255, 0.94);
-
-  font-size: 13px;
-  letter-spacing: 3px;
-
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-
-.toolbar__actions {
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-}
-
-
-.toolbar-button {
-  min-width: 36px;
-  height: 36px;
-
-  padding: 0 12px;
-
-  border:
-    1px solid
-    rgba(255, 255, 255, 0.34);
-
-  border-radius: 999px;
-
-  color: #ffffff;
-
-  background:
-    rgba(0, 0, 0, 0.24);
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-
-.toolbar-button:hover {
-  background:
-    rgba(255, 255, 255, 0.16);
-
-  border-color:
-    rgba(255, 255, 255, 0.56);
-
-  transform:
-    translateY(-1px);
-}
-
-
-.toolbar-button--text {
-  min-width: 62px;
-
-  font-size: 12px;
-}
-
-
-.page-status {
-  min-width: 64px;
-
-  color:
-    rgba(255, 255, 255, 0.92);
-
-  font-size: 12px;
-  text-align: center;
-}
-
-
-.page-status__divider {
-  margin: 0 5px;
-
-  opacity: 0.55;
-}
-
-
-/* =========================================
-   画册展示区域
-   ========================================= */
-
-.book-stage {
-  position: relative;
-
-  width: 100%;
-  min-width: 0;
-  min-height: 0;
-
-  overflow: hidden;
-}
-
-
-/*
-  电脑端双页逻辑尺寸：
-
-  单页：749 × 1000
-  双页：1498 × 1000
-
-  JavaScript会根据浏览器大小，
-  自动计算缩放比例。
-*/
-.desktop-book {
-  position: absolute;
-
-  left: 50%;
-  top: 50%;
-
-  width: 1498px;
-  height: 1000px;
-
-  transform:
-    translate(-50%, -50%)
-    scale(var(--book-scale));
-
-  transform-origin: center;
-
-  filter:
-    drop-shadow(
-      0
-      22px
-      38px
-      rgba(0, 0, 0, 0.34)
+    let scale =
+      Math.min(
+        widthScale,
+        heightScale
+      );
+
+    scale =
+      Math.min(scale, 1.18);
+
+    scale =
+      Math.max(scale, 0.25);
+
+    document.documentElement.style.setProperty(
+      "--book-scale",
+      String(scale)
     );
-}
-
-
-#book {
-  width: 1498px;
-  height: 1000px;
-}
-
-
-/* =========================================
-   StPageFlip自动生成的元素
-   ========================================= */
-
-.stf__parent {
-  margin: 0 auto !important;
-}
-
-
-.stf__item {
-  background: #ffffff;
-}
-
-
-.stf__block {
-  box-shadow: none !important;
-}
-
-
-/* =========================================
-   手机端单页画册
-   ========================================= */
-
-.mobile-book {
-  display: none;
-}
-
-
-.mobile-book__page {
-  display: block;
-
-  width: 100%;
-  height: auto;
-
-  background: #ffffff;
-
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-
-/* =========================================
-   左右点击翻页区域
-   ========================================= */
-
-.page-hotspot {
-  position: absolute;
-
-  top: 8%;
-  bottom: 8%;
-
-  z-index: 12;
-
-  width: min(10vw, 110px);
-
-  border: 0;
-  outline: 0;
-
-  background: transparent;
-
-  cursor: pointer;
-}
-
-
-.page-hotspot--left {
-  left: 0;
-}
-
-
-.page-hotspot--right {
-  right: 0;
-}
-
-
-/* =========================================
-   底部提示
-   ========================================= */
-
-.reader-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-top:
-    1px solid
-    rgba(255, 255, 255, 0.15);
-
-  color:
-    rgba(255, 255, 255, 0.70);
-
-  background:
-    rgba(40, 40, 44, 0.20);
-
-  font-size: 10px;
-  letter-spacing: 1px;
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-
-/* =========================================
-   翻页插件加载失败备用模式
-   ========================================= */
-
-body.is-fallback .desktop-book {
-  display: none;
-}
-
-
-body.is-fallback .mobile-book {
-  display: block;
-
-  width:
-    min(74vh, 72vw);
-
-  max-width: 749px;
-  max-height:
-    calc(100% - 16px);
-
-  margin: auto;
-
-  overflow-y: auto;
-
-  background: transparent;
-
-  box-shadow:
-    0 18px 38px
-    rgba(0, 0, 0, 0.28);
-}
-
-
-body.is-fallback .mobile-book__page {
-  width: 100%;
-  height: auto;
-}
-
-
-/* =========================================
-   手机端适配
-   ========================================= */
-
-@media (max-width: 768px) {
-
-  :root {
-    --toolbar-height: 48px;
   }
 
 
-  .reader {
-    grid-template-rows:
-      var(--toolbar-height)
-      minmax(0, 1fr);
+  /* ==============================
+     插件失败时使用单页备用模式
+     ============================== */
+
+  function enableFallbackMode() {
+    fallbackMode = true;
+
+    document.body.classList.add(
+      "is-fallback"
+    );
+
+    desktopBook.style.display =
+      "none";
+
+    mobileBook.style.display =
+      "block";
+
+    updateMobilePage();
   }
 
 
-  .toolbar {
-    padding: 0 8px;
+  /* ==============================
+     初始化电脑端翻页
+     ============================== */
+
+  function initializeDesktopBook() {
+    if (desktopInitialized) {
+      fitDesktopBook();
+      return;
+    }
+
+    /*
+      CDN翻页插件没有加载成功时，
+      自动使用单页备用模式。
+    */
+
+    if (
+      !window.St ||
+      !window.St.PageFlip
+    ) {
+      enableFallbackMode();
+      return;
+    }
+
+
+    pageFlip =
+      new window.St.PageFlip(
+        bookElement,
+        {
+          width: 749,
+          height: 1000,
+
+          size: "fixed",
+
+          showCover: true,
+
+          usePortrait: false,
+
+          autoSize: false,
+
+          drawShadow: true,
+
+          maxShadowOpacity: 0.4,
+
+          flippingTime: 850,
+
+          mobileScrollSupport: false,
+
+          swipeDistance: 24,
+
+          showPageCorners: true,
+
+          disableFlipByClick: false
+        }
+      );
+
+
+    pageFlip.loadFromImages(
+      pageImages
+    );
+
+
+    pageFlip.on(
+      "flip",
+      function (event) {
+        currentPageIndex =
+          Number(event.data) || 0;
+
+        updatePageNumber();
+      }
+    );
+
+
+    desktopInitialized = true;
+
+
+    window.setTimeout(
+      fitDesktopBook,
+      100
+    );
+
+
+    window.setTimeout(
+      fitDesktopBook,
+      500
+    );
   }
 
 
-  .toolbar__brand {
-    max-width: 88px;
+  /* ==============================
+     切换电脑和手机模式
+     ============================== */
 
-    font-size: 10px;
-    letter-spacing: 1px;
+  function updateResponsiveMode() {
+    if (
+      isMobileView() ||
+      fallbackMode
+    ) {
+      desktopBook.style.display =
+        "none";
+
+      mobileBook.style.display =
+        "block";
+
+      updateMobilePage();
+
+      return;
+    }
+
+
+    mobileBook.style.display =
+      "none";
+
+    desktopBook.style.display =
+      "block";
+
+    initializeDesktopBook();
+
+    fitDesktopBook();
   }
 
 
-  .toolbar__actions {
-    gap: 4px;
+  /* ==============================
+     打开画册
+     ============================== */
+
+  function openReader() {
+    /*
+      先显示阅读页面。
+    */
+
+    reader.classList.add(
+      "is-active"
+    );
+
+    reader.setAttribute(
+      "aria-hidden",
+      "false"
+    );
+
+
+    /*
+      初始化画册。
+    */
+
+    window.requestAnimationFrame(
+      function () {
+        updateResponsiveMode();
+        fitDesktopBook();
+      }
+    );
+
+
+    /*
+      开屏淡出。
+    */
+
+    splash.classList.add(
+      "is-hidden"
+    );
+
+
+    /*
+      动画结束后彻底隐藏开屏。
+    */
+
+    window.setTimeout(
+      function () {
+        splash.style.display =
+          "none";
+
+        updateResponsiveMode();
+
+        fitDesktopBook();
+      },
+      720
+    );
   }
 
 
-  .toolbar-button {
-    min-width: 32px;
-    height: 32px;
+  /* ==============================
+     上一页
+     ============================== */
 
-    padding: 0 8px;
+  function previousPage() {
+    if (
+      isMobileView() ||
+      fallbackMode
+    ) {
+      if (currentPageIndex > 0) {
+        currentPageIndex -= 1;
 
-    font-size: 12px;
+        updateMobilePage();
+      }
+
+      return;
+    }
+
+
+    if (pageFlip) {
+      pageFlip.flipPrev();
+    }
   }
 
 
-  .toolbar-button--text {
-    min-width: 50px;
+  /* ==============================
+     下一页
+     ============================== */
 
-    font-size: 11px;
+  function nextPage() {
+    if (
+      isMobileView() ||
+      fallbackMode
+    ) {
+      if (
+        currentPageIndex <
+        PAGE_COUNT - 1
+      ) {
+        currentPageIndex += 1;
+
+        updateMobilePage();
+      }
+
+      return;
+    }
+
+
+    if (pageFlip) {
+      pageFlip.flipNext();
+    }
   }
 
 
-  .page-status {
-    min-width: 48px;
+  /* ==============================
+     全屏
+     ============================== */
 
-    font-size: 11px;
+  async function toggleFullscreen() {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (error) {
+      console.warn(
+        "浏览器未允许全屏：",
+        error
+      );
+    }
   }
+
+
+  /* ==============================
+     点击事件
+     ============================== */
+
+  enterBtn.addEventListener(
+    "click",
+    openReader
+  );
+
+
+  prevBtn.addEventListener(
+    "click",
+    previousPage
+  );
+
+
+  nextBtn.addEventListener(
+    "click",
+    nextPage
+  );
+
+
+  leftHotspot.addEventListener(
+    "click",
+    previousPage
+  );
+
+
+  rightHotspot.addEventListener(
+    "click",
+    nextPage
+  );
+
+
+  fullscreenBtn.addEventListener(
+    "click",
+    toggleFullscreen
+  );
+
+
+  /* ==============================
+     键盘翻页
+     ============================== */
+
+  document.addEventListener(
+    "keydown",
+    function (event) {
+      if (
+        !reader.classList.contains(
+          "is-active"
+        )
+      ) {
+        if (
+          event.key === "Enter" ||
+          event.key === " "
+        ) {
+          event.preventDefault();
+
+          openReader();
+        }
+
+        return;
+      }
+
+
+      if (event.key === "ArrowLeft") {
+        previousPage();
+      }
+
+
+      if (event.key === "ArrowRight") {
+        nextPage();
+      }
+
+
+      if (
+        event.key === "f" ||
+        event.key === "F"
+      ) {
+        toggleFullscreen();
+      }
+    }
+  );
+
+
+  /* ==============================
+     手机左右滑动
+     ============================== */
+
+  mobileBook.addEventListener(
+    "touchstart",
+    function (event) {
+      const touch =
+        event.changedTouches[0];
+
+      touchStartX =
+        touch.screenX;
+
+      touchStartY =
+        touch.screenY;
+    },
+    {
+      passive: true
+    }
+  );
+
+
+  mobileBook.addEventListener(
+    "touchend",
+    function (event) {
+      const touch =
+        event.changedTouches[0];
+
+      const distanceX =
+        touch.screenX -
+        touchStartX;
+
+      const distanceY =
+        touch.screenY -
+        touchStartY;
+
+
+      /*
+        纵向滚动大于横向滑动时，
+        不执行翻页。
+      */
+
+      if (
+        Math.abs(distanceX) <
+        Math.abs(distanceY)
+      ) {
+        return;
+      }
+
+
+      if (distanceX > 55) {
+        previousPage();
+      }
+
+
+      if (distanceX < -55) {
+        nextPage();
+      }
+    },
+    {
+      passive: true
+    }
+  );
+
+
+  /* ==============================
+     浏览器大小改变
+     ============================== */
+
+  window.addEventListener(
+    "resize",
+    function () {
+      window.clearTimeout(
+        resizeTimer
+      );
+
+
+      resizeTimer =
+        window.setTimeout(
+          function () {
+            updateResponsiveMode();
+
+            fitDesktopBook();
+          },
+          150
+        );
+    }
+  );
+
+
+  /* ==============================
+     全屏状态变化
+     ============================== */
+
+  document.addEventListener(
+    "fullscreenchange",
+    function () {
+      fullscreenBtn.textContent =
+        document.fullscreenElement
+          ? "退出"
+          : "全屏";
+
+
+      window.setTimeout(
+        function () {
+          updateResponsiveMode();
+
+          fitDesktopBook();
+        },
+        120
+      );
+    }
+  );
 
 
   /*
-    手机端隐藏电脑双页画册。
+    用于确认main.js已经成功运行。
+
+    打开浏览器控制台时，
+    应该能看到这句话。
   */
-  .desktop-book {
-    display: none !important;
-  }
 
-
-  /*
-    手机端画册区域允许上下滚动。
-  */
-  .book-stage {
-    overflow-x: hidden;
-    overflow-y: auto;
-
-    -webkit-overflow-scrolling: touch;
-  }
-
-
-  /*
-    手机端显示单页画册。
-  */
-  .mobile-book {
-    display: block !important;
-
-    width: 100%;
-    min-height: 100%;
-
-    background: transparent;
-  }
-
-
-  /*
-    每一页占满手机屏幕宽度。
-  */
-  .mobile-book__page {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-
-    object-fit: contain;
-
-    box-shadow:
-      0 10px 28px
-      rgba(0, 0, 0, 0.24);
-  }
-
-
-  /*
-    手机端隐藏底部提示，
-    给画册留更多高度。
-  */
-  .reader-footer {
-    display: none;
-  }
-
-
-  /*
-    手机端左右翻页点击区域。
-  */
-  .page-hotspot {
-    position: fixed;
-
-    top:
-      var(--toolbar-height);
-
-    bottom: 0;
-
-    width: 18vw;
-  }
-
-
-  .splash__content {
-    bottom:
-      max(4vh, 26px);
-  }
-
-
-  .enter-button {
-    min-width: 166px;
-    height: 48px;
-
-    font-size: 13px;
-  }
-
-
-  .splash__tip {
-    font-size: 10px;
-  }
-}
-
-
-/* =========================================
-   减少动画设置
-   ========================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    transition-duration:
-      0.01ms !important;
-
-    animation-duration:
-      0.01ms !important;
-  }
-}
+  console.log(
+    "江北嘴电子画册 main.js 已成功加载"
+  );
+});
